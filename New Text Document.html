@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VENOM RB | Official City</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    :root{
+      --bg:#06070d;
+      --card:rgba(18,20,35,.76);
+      --card2:rgba(124,60,255,.12);
+      --main:#7c3cff;
+      --cyan:#00e5ff;
+      --gold:#ffd166;
+      --red:#ff3c68;
+      --green:#20e080;
+      --text:#fff;
+      --muted:#b7b8c9;
+      --line:rgba(255,255,255,.12);
+    }
+    html{scroll-behavior:smooth}
+    body{
+      font-family:'Cairo',sans-serif;
+      background:
+        radial-gradient(circle at 20% 20%, rgba(124,60,255,.35), transparent 32%),
+        radial-gradient(circle at 80% 10%, rgba(0,229,255,.18), transparent 28%),
+        radial-gradient(circle at 50% 100%, rgba(255,60,104,.13), transparent 30%),
+        var(--bg);
+      color:var(--text);
+      overflow-x:hidden;
+    }
+    body::before{
+      content:"";position:fixed;inset:0;pointer-events:none;z-index:-1;
+      background-image:linear-gradient(rgba(255,255,255,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.035) 1px,transparent 1px);
+      background-size:42px 42px;
+      mask-image:linear-gradient(to bottom,#000,transparent 90%);
+    }
+    a{text-decoration:none;color:inherit}
+    .container{width:min(1180px,92%);margin:auto}
+    .nav{
+      position:sticky;top:0;z-index:99;
+      backdrop-filter:blur(18px);
+      background:rgba(6,7,13,.75);
+      border-bottom:1px solid var(--line);
+    }
+    .nav-inner{height:78px;display:flex;align-items:center;justify-content:space-between;gap:18px}
+    .brand{display:flex;align-items:center;gap:12px;font-weight:900;font-size:24px;letter-spacing:.5px}
+    .logo{
+      width:48px;height:48px;border-radius:16px;
+      display:grid;place-items:center;
+      background:linear-gradient(135deg,var(--main),#181b33);
+      box-shadow:0 0 28px rgba(124,60,255,.55);
+      border:1px solid rgba(255,255,255,.18);
+    }
+    .links{display:flex;align-items:center;gap:18px;color:var(--muted);font-weight:700;font-size:14px}
+    .links a:hover{color:#fff}
+    .btn{
+      display:inline-flex;align-items:center;justify-content:center;gap:8px;
+      padding:12px 20px;border-radius:16px;font-weight:900;
+      border:1px solid rgba(255,255,255,.16);
+      background:linear-gradient(135deg,var(--main),#4d1fff);
+      box-shadow:0 12px 35px rgba(124,60,255,.35);
+      transition:.25s;cursor:pointer
+    }
+    .btn:hover{transform:translateY(-3px);box-shadow:0 16px 40px rgba(124,60,255,.55)}
+    .btn.alt{background:rgba(255,255,255,.06);box-shadow:none}
+    .hero{padding:92px 0 60px;position:relative}
+    .hero-grid{display:grid;grid-template-columns:1.1fr .9fr;align-items:center;gap:42px}
+    .badge{
+      display:inline-flex;gap:8px;align-items:center;
+      border:1px solid rgba(255,255,255,.13);background:rgba(255,255,255,.06);
+      padding:9px 14px;border-radius:999px;color:var(--muted);font-weight:800;margin-bottom:20px
+    }
+    h1{font-size:clamp(38px,6vw,78px);line-height:1.08;font-weight:900;margin-bottom:18px}
+    .grad{background:linear-gradient(90deg,#fff,var(--cyan),var(--main),var(--gold));-webkit-background-clip:text;background-clip:text;color:transparent}
+    .hero p{color:var(--muted);font-size:18px;line-height:2;margin-bottom:28px}
+    .hero-actions{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:30px}
+    .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+    .stat,.glass-card,.card,.law,.apply-card{
+      background:linear-gradient(180deg,rgba(255,255,255,.08),rgba(255,255,255,.035));
+      border:1px solid var(--line);border-radius:26px;
+      box-shadow:0 18px 60px rgba(0,0,0,.28);
+    }
+    .stat{padding:16px;text-align:center}
+    .stat b{font-size:26px;color:#fff}.stat span{display:block;color:var(--muted);font-size:13px;font-weight:700}
+    .hero-panel{position:relative}
+    .glass-card{padding:24px;overflow:hidden;position:relative}
+    .glass-card::before{content:"";position:absolute;inset:-2px;background:radial-gradient(circle at top,var(--main),transparent 42%);opacity:.25;z-index:-1}
+    .server-box{padding:24px;border-radius:22px;background:rgba(0,0,0,.24);border:1px solid var(--line);margin-bottom:16px}
+    .server-title{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px}
+    .server-title h2{font-size:28px}.online{color:var(--green);font-weight:900}
+    .mini-list{display:grid;gap:10px;margin-top:16px}
+    .mini-list div{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-radius:16px;background:rgba(255,255,255,.06);color:var(--muted);font-weight:800}
+    section{padding:70px 0}
+    .section-head{text-align:center;margin-bottom:34px}
+    .section-head h2{font-size:clamp(28px,4vw,46px);font-weight:900;margin-bottom:10px}.section-head p{color:var(--muted);font-size:17px}
+    .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+    .card{padding:24px;transition:.25s}.card:hover{transform:translateY(-6px);border-color:rgba(124,60,255,.45)}
+    .icon{font-size:38px;margin-bottom:12px}.card h3{font-size:22px;margin-bottom:8px}.card p{color:var(--muted);line-height:1.8}
+    .laws{display:grid;grid-template-columns:repeat(2,1fr);gap:18px}.law{padding:24px}.law h3{font-size:24px;margin-bottom:16px}.law ul{display:grid;gap:12px;color:var(--muted);line-height:1.8;list-style:none}.law li{padding:12px;border-radius:14px;background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.06)}
+    .apps{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}.apply-card{padding:26px;text-align:center;position:relative;overflow:hidden}.apply-card::before{content:"";position:absolute;inset:auto -30% -40% -30%;height:160px;background:radial-gradient(circle,var(--main),transparent 65%);opacity:.35}.apply-card .emoji{font-size:52px;margin-bottom:12px}.apply-card h3{font-size:24px;margin-bottom:10px}.apply-card p{color:var(--muted);line-height:1.8;margin-bottom:18px}
+    .admin{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:stretch}.panel{padding:28px;border-radius:28px;background:linear-gradient(135deg,rgba(124,60,255,.18),rgba(0,229,255,.08));border:1px solid var(--line)}.panel h3{font-size:28px;margin-bottom:14px}.panel p{color:var(--muted);line-height:2}.timeline{display:grid;gap:14px}.step{padding:16px;border-radius:18px;background:rgba(255,255,255,.055);border:1px solid var(--line)}.step b{color:var(--cyan)}
+    footer{padding:34px 0;border-top:1px solid var(--line);color:var(--muted);text-align:center;background:rgba(0,0,0,.2)}
+    @media(max-width:900px){.hero-grid,.admin{grid-template-columns:1fr}.grid,.apps,.laws{grid-template-columns:1fr}.links{display:none}.stats{grid-template-columns:1fr}.hero{padding-top:54px}}
+  </style>
+</head>
+<body>
+  <nav class="nav">
+    <div class="container nav-inner">
+      <div class="brand"><div class="logo">🦂</div><span>VENOM <span class="grad">RB</span></span></div>
+      <div class="links">
+        <a href="#home">الرئيسية</a>
+        <a href="#services">الخدمات</a>
+        <a href="#rules">القوانين</a>
+        <a href="#apply">التقديمات</a>
+        <a href="#discord">الديسكورد</a>
+      </div>
+      <a class="btn" href="https://discord.gg/hDVfDDPH" target="_blank">انضم الآن</a>
+    </div>
+  </nav>
+
+  <header class="hero" id="home">
+    <div class="container hero-grid">
+      <div>
+        <div class="badge">🟢 المدينة تحت التجهيز الكامل</div>
+        <h1>مدينة <span class="grad">VENOM RB</span><br>للرول بلاي الاحترافي</h1>
+        <p>موقع رسمي منظم لمدينة VENOM RB، يجمع القوانين، التقديمات، أخبار المدينة، الدعم الفني، وروابط الديسكورد في مكان واحد بشكل احترافي.</p>
+        <div class="hero-actions">
+          <a class="btn" href="https://discord.gg/hDVfDDPH" target="_blank">دخول الديسكورد</a>
+          <a class="btn alt" href="#apply">التقديمات الرسمية</a>
+        </div>
+        <div class="stats">
+          <div class="stat"><b>24/7</b><span>دعم ومتابعة</span></div>
+          <div class="stat"><b>RP</b><span>رول بلاي منظم</span></div>
+          <div class="stat"><b>VIP</b><span>إدارة احترافية</span></div>
+        </div>
+      </div>
+
+      <div class="hero-panel">
+        <div class="glass-card">
+          <div class="server-box">
+            <div class="server-title"><h2>VENOM RB</h2><span class="online">ONLINE</span></div>
+            <p style="color:var(--muted);line-height:1.9">تابع آخر أخبار المدينة، مواعيد الاجتماعات، التقديمات، القوانين، والدعم الفني من خلال الديسكورد الرسمي.</p>
+            <div class="mini-list">
+              <div><span>📜 قوانين السيرفر</span><b>متاحة</b></div>
+              <div><span>🎭 قوانين الرول بلاي</span><b>مهمة</b></div>
+              <div><span>🚔 تقديم الشرطة</span><b>رسمي</b></div>
+              <div><span>🚑 تقديم الإسعاف</span><b>رسمي</b></div>
+              <div><span>🛠️ الدعم الفني</span><b>تذاكر</b></div>
+            </div>
+          </div>
+          <a class="btn" style="width:100%" href="https://discord.gg/hDVfDDPH" target="_blank">فتح السيرفر على Discord</a>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <section id="services">
+    <div class="container">
+      <div class="section-head"><h2>خدمات المدينة</h2><p>كل حاجة محتاجها داخل VENOM RB بشكل مرتب وواضح</p></div>
+      <div class="grid">
+        <div class="card"><div class="icon">📢</div><h3>أخبار السيرفر</h3><p>إعلانات رسمية عن الافتتاح، التحديثات، الاجتماعات، والأحداث المهمة.</p></div>
+        <div class="card"><div class="icon">🎫</div><h3>نظام التذاكر</h3><p>فتح تذكرة للدعم الفني، تقديم الشرطة، تقديم الإسعاف، والمشاكل العامة.</p></div>
+        <div class="card"><div class="icon">🛡️</div><h3>إدارة منظمة</h3><p>متابعة مستمرة للحفاظ على النظام وجودة تجربة الرول بلاي.</p></div>
+        <div class="card"><div class="icon">🚔</div><h3>شرطة المدينة</h3><p>جهة رسمية لحفظ الأمن وتنظيم السيناريوهات داخل المدينة.</p></div>
+        <div class="card"><div class="icon">🚑</div><h3>هيئة الإسعاف</h3><p>فريق طبي محترف للتعامل مع الحالات الطارئة والسيناريوهات الطبية.</p></div>
+        <div class="card"><div class="icon">⚙️</div><h3>تطوير مستمر</h3><p>تحديثات مستمرة لتحسين الأداء، الأنظمة، والقوانين داخل المدينة.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="rules">
+    <div class="container">
+      <div class="section-head"><h2>القوانين الرسمية</h2><p>قراءة القوانين شرط أساسي قبل دخول المدينة، وأي مخالفة يتم التعامل معها إداريًا حسب النظام.</p></div>
+      <div class="laws">
+        <div class="law">
+          <h3>📜 قوانين السيرفر</h3>
+          <ul>
+            <li><b>الاحترام:</b> يمنع السب أو الشتم أو الإهانة أو العنصرية أو التنمر بأي شكل.</li>
+            <li><b>الإعلانات:</b> يمنع نشر روابط سيرفرات أو إعلانات خاصة بدون إذن الإدارة.</li>
+            <li><b>التذاكر:</b> يمنع فتح تذاكر عشوائية أو بلاغات كاذبة أو إزعاج فريق الإدارة.</li>
+            <li><b>انتحال الشخصيات:</b> يمنع انتحال الإدارة أو الشرطة أو الإسعاف أو أي جهة رسمية.</li>
+            <li><b>الأسماء والصور:</b> يمنع استخدام أسماء أو صور مسيئة أو غير لائقة.</li>
+            <li><b>المحتوى غير اللائق:</b> يمنع إرسال صور أو مقاطع أو كلمات تخالف الآداب العامة.</li>
+            <li><b>الغش والثغرات:</b> يمنع استخدام هاكات أو ماكرو أو استغلال أي ثغرة داخل السيرفر.</li>
+            <li><b>الخصوصية:</b> يمنع نشر معلومات شخصية عن أي عضو بدون موافقته.</li>
+            <li><b>البيع والشراء:</b> يمنع البيع أو الشراء خارج الأنظمة المسموحة من الإدارة.</li>
+            <li><b>Vencord والقنوات المخفية:</b> أي محاولة لرؤية القنوات المخفية أو الوصول لمحتوى غير مصرح به سيتم التعامل معها بشكل رسمي.</li>
+            <li><b>قرارات الإدارة:</b> قرارات الإدارة نهائية، ويمكن الاعتراض من خلال تذكرة رسمية فقط.</li>
+            <li><b>الجهل بالقوانين:</b> عدم قراءة القوانين لا يعفيك من العقوبة.</li>
+          </ul>
+        </div>
+        <div class="law">
+          <h3>🎭 قوانين الرول بلاي</h3>
+          <ul>
+            <li><b>RDM:</b> يمنع القتل العشوائي بدون سبب واضح داخل السيناريو.</li>
+            <li><b>VDM:</b> يمنع استخدام السيارة كسلاح أو دهس اللاعبين بدون سبب رول بلاي.</li>
+            <li><b>Fail RP:</b> يمنع القيام بتصرفات غير واقعية أو تخالف منطق الحياة الواقعية.</li>
+            <li><b>Meta Gaming:</b> يمنع استخدام معلومات من خارج اللعبة داخل السيناريو.</li>
+            <li><b>Power Gaming:</b> يمنع إجبار لاعب على تصرف غير منطقي أو مستحيل.</li>
+            <li><b>Fear RP:</b> يجب أن تخاف على حياتك عند وجود تهديد حقيقي.</li>
+            <li><b>Combat Logging:</b> يمنع الخروج من السيرفر أثناء مطاردة أو سيناريو أو تحقيق.</li>
+            <li><b>NLR:</b> بعد الموت يجب نسيان أحداث السيناريو السابق وعدم الرجوع للانتقام.</li>
+            <li><b>Cop Baiting:</b> يمنع استفزاز الشرطة بدون سبب رول بلاي واضح.</li>
+            <li><b>New Life:</b> عند الإنعاش أو العودة يجب الالتزام بسياق السيناريو وعدم التخريب.</li>
+            <li><b>الأسلحة:</b> يمنع استخدام السلاح بدون سبب قوي أو بدون تصعيد مناسب.</li>
+            <li><b>الخطف والسرقة:</b> يجب أن تكون ضمن سيناريو واضح ومحترم وغير عشوائي.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="apply">
+    <div class="container">
+      <div class="section-head"><h2>التقديمات الرسمية</h2><p>اختر الجهة المناسبة وافتح تذكرة من الديسكورد</p></div>
+      <div class="apps">
+        <div class="apply-card"><div class="emoji">🏙️</div><h3>تقديم المدينة</h3><p>ابدأ رحلتك داخل VENOM RB من خلال تقديم رسمي ومنظم.</p><a class="btn" href="https://discord.gg/hDVfDDPH" target="_blank">قدم الآن</a></div>
+        <div class="apply-card"><div class="emoji">🚔</div><h3>تقديم الشرطة</h3><p>انضم لشرطة المدينة وشارك في حفظ الأمن وتنظيم السيناريوهات.</p><a class="btn" href="https://discord.gg/hDVfDDPH" target="_blank">قدم الآن</a></div>
+        <div class="apply-card"><div class="emoji">🚑</div><h3>تقديم الإسعاف</h3><p>كن جزءًا من الفريق الطبي وساعد في إنقاذ الحالات الطارئة.</p><a class="btn" href="https://discord.gg/hDVfDDPH" target="_blank">قدم الآن</a></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="discord">
+    <div class="container admin">
+      <div class="panel">
+        <h3>📌 ملاحظات مهمة</h3>
+        <p>المدينة تحت التجهيز والتطوير. سيتم الإعلان عن موعد الافتتاح الرسمي داخل الديسكورد. يرجى متابعة الأخبار والالتزام بالقوانين والتوجيهات الإدارية.</p>
+        <br>
+        <a class="btn" href="https://discord.gg/hDVfDDPH" target="_blank">دخول الديسكورد</a>
+      </div>
+      <div class="panel timeline">
+        <div class="step"><b>01</b> اقرأ القوانين كاملة قبل الدخول.</div>
+        <div class="step"><b>02</b> افتح تذكرة للتقديم أو الدعم.</div>
+        <div class="step"><b>03</b> التزم بالرول بلاي داخل المدينة.</div>
+        <div class="step"><b>04</b> تابع الإعلانات والاجتماعات الإدارية.</div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="container">© 2026 VENOM RB — Designed for Roleplay City • المنوفي</div>
+  </footer>
+</body>
+</html>

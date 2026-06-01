@@ -23,294 +23,546 @@ client.once("clientReady", () => {
   console.log(`✅ Logged in as ${client.user.tag}`);
 });
 
-function logEmbed(guild, title, desc, color = 0x7c3cff) {
-  const ch = guild.channels.cache.get(process.env.LOG_CHANNEL_ID);
-  if (!ch) return;
+function getChannel(guild, envName) {
+  const id = process.env[envName] || process.env.LOG_CHANNEL_ID;
+  if (!id) return null;
+  return guild.channels.cache.get(id);
+}
+
+async function sendLog(guild, envName, title, description, color = 0x7c3cff) {
+  const channel = getChannel(guild, envName);
+
+  if (!channel) {
+    console.log(`❌ Channel not found for ${envName}`);
+    return;
+  }
 
   const embed = new EmbedBuilder()
     .setColor(color)
     .setTitle(title)
-    .setDescription(desc)
-    .setFooter({ text: "VENOM RP • Logs" })
+    .setDescription(description)
+    .setFooter({ text: "VENOM RB • Logs" })
     .setTimestamp();
 
-  ch.send({ embeds: [embed] }).catch(() => {});
-}
-
-client.on("guildMemberAdd", async (member) => {
   try {
-  const roleId = process.env.COMMUNITY_ROLE_ID;
-
-  if (!roleId) {
-    console.log("❌ COMMUNITY_ROLE_ID مش موجود في ملف .env");
-  } else {
-    const role = await member.guild.roles.fetch(roleId);
-
-    if (!role) {
-      console.log("❌ الرول مش موجود، راجع ID الرول");
-    } else {
-      await member.roles.add(role);
-      console.log(`✅ تم إعطاء رول ${role.name} لـ ${member.user.tag}`);
-    }
+    await channel.send({ embeds: [embed] });
+  } catch (err) {
+    console.log(`❌ Failed sending log to ${envName}: ${err.message}`);
   }
-} catch (err) {
-  console.log("❌ فشل إعطاء الرول:");
-  console.log(err.message);
 }
 
-  const channel = member.guild.channels.cache.get(process.env.WELCOME_CHANNEL_ID);
-  const serverIcon = member.guild.iconURL({ dynamic: true, size: 1024 });
-  const userAvatar = member.user.displayAvatarURL({ dynamic: true, size: 1024 });
+async function getAuditLog(guild, type, targetId = null) {
+  try {
+    const logs = await guild.fetchAuditLogs({ type, limit: 5 });
+    const entry = logs.entries.find(e => {
+      if (Date.now() - e.createdTimestamp > 15000) return false;
+      if (targetId && e.target?.id !== targetId) return false;
+      return true;
+    });
 
-  if (channel) {
+    return entry || null;
+  } catch {
+    return null;
+  }
+}
+
+function cleanText(text) {
+  if (!text) return "لا يوجد محتوى";
+  if (text.length > 900) return text.slice(0, 900) + "...";
+  return text;
+}
+
+// =======================
+// Welcome + Auto Role
+// =======================
+client.on("guildMemberAdd", async (member) => {
+  const serverRules = process.env.SERVER_RULES_CHANNEL_ID
+    ? `<#${process.env.SERVER_RULES_CHANNEL_ID}>`
+    : "روم قوانين السيرفر";
+
+  const rpRules = process.env.RP_RULES_CHANNEL_ID
+    ? `<#${process.env.RP_RULES_CHANNEL_ID}>`
+    : "روم قوانين الرول بلاي";
+
+  try {
+    const roleId = process.env.COMMUNITY_ROLE_ID;
+    if (roleId) {
+      const role = await member.guild.roles.fetch(roleId);
+      if (role) {
+        await member.roles.add(role);
+        console.log(`✅ Auto role added: ${role.name} to ${member.user.tag}`);
+      } else {
+        console.log("❌ COMMUNITY_ROLE_ID role not found");
+      }
+    }
+  } catch (err) {
+    console.log("❌ Auto role failed:", err.message);
+  }
+
+  const welcomeChannel = getChannel(member.guild, "WELCOME_CHANNEL_ID");
+  const avatar = member.user.displayAvatarURL({ dynamic: true, size: 1024 });
+  const serverIcon = member.guild.iconURL({ dynamic: true, size: 1024 });
+
+  if (welcomeChannel) {
     const embed = new EmbedBuilder()
       .setColor(0x7c3cff)
-      .setAuthor({ name: `Welcome to ${member.guild.name}`, iconURL: serverIcon || userAvatar })
-      .setTitle("👋 نورت مدينة VENOM RP")
+      .setAuthor({
+        name: `Welcome to ${member.guild.name}`,
+        iconURL: serverIcon || avatar
+      })
+      .setTitle("👋 نورت مدينة VENOM RB")
       .setDescription(`
 أهلًا بيك يا ${member} 🔥
 
-📜 اقرأ قوانين السيرفر والمدينة  
-🏙️ تابع أخبار المدينة  
-🚔 تقديم الشرطة من التذاكر  
-🚑 تقديم الإسعاف من التذاكر  
-🛠️ الدعم الفني من التذاكر  
+📜 قبل ما تبدأ لازم تقرأ:
+${serverRules}
+${rpRules}
+
+🏙️ تابع أخبار المدينة والتحديثات
+🎫 التقديمات والدعم الفني من خلال التذاكر
 
 ✅ تم إعطاؤك رول المجتمع تلقائيًا
 
-⚜️ **VENOM RP**
+⚜️ **VENOM RB**
 ✍️ **المنوفي**
 `)
-      .setThumbnail(userAvatar)
+      .setThumbnail(avatar)
       .setImage(serverIcon)
       .setTimestamp();
 
-    channel.send({ embeds: [embed] }).catch(() => {});
+    welcomeChannel.send({ embeds: [embed] }).catch(() => {});
   }
 
-  logEmbed(member.guild, "✅ دخول عضو", `👤 العضو: ${member}\n🆔 ${member.user.tag}`, 0x20e080);
+  sendLog(
+    member.guild,
+    "JOIN_LOG_CHANNEL_ID",
+    "✅ دخول عضو",
+    `👤 العضو: ${member}\n🆔 الاسم: ${member.user.tag}\n📅 الحساب اتعمل: <t:${Math.floor(member.user.createdTimestamp / 1000)}:R>`,
+    0x20e080
+  );
 });
 
+// =======================
+// Leave + Kick Log
+// =======================
 client.on("guildMemberRemove", async (member) => {
-  let executor = "غير معروف";
-  try {
-    const logs = await member.guild.fetchAuditLogs({ type: AuditLogEvent.MemberKick, limit: 1 });
-    const entry = logs.entries.first();
-    if (entry && entry.target?.id === member.id && Date.now() - entry.createdTimestamp < 5000) {
-      executor = entry.executor.tag;
-      return logEmbed(member.guild, "👢 Kick", `👤 العضو: ${member.user.tag}\n👮 بواسطة: ${executor}`, 0xff3c68);
-    }
-  } catch {}
+  const kickEntry = await getAuditLog(
+    member.guild,
+    AuditLogEvent.MemberKick,
+    member.id
+  );
 
-  logEmbed(member.guild, "❌ خروج عضو", `👤 العضو: ${member.user.tag}`, 0xffc857);
+  if (kickEntry) {
+    await sendLog(
+      member.guild,
+      "KICK_LOG_CHANNEL_ID",
+      "👢 كيك | عضو اتطرد",
+      `👤 العضو: **${member.user.tag}**
+🆔 ID: \`${member.id}\`
+👮 بواسطة: **${kickEntry.executor?.tag || "غير معروف"}**
+📌 السبب: ${kickEntry.reason || "بدون سبب"}`,
+      0xff3c68
+    );
+    return;
+  }
+
+  const leaveChannel = getChannel(member.guild, "LEAVE_CHANNEL_ID");
+  const avatar = member.user.displayAvatarURL({ dynamic: true, size: 1024 });
+
+  if (leaveChannel) {
+    const embed = new EmbedBuilder()
+      .setColor(0xffc857)
+      .setTitle("👋 عضو غادر السيرفر")
+      .setDescription(`خرج من السيرفر: **${member.user.tag}**`)
+      .setThumbnail(avatar)
+      .setTimestamp();
+
+    leaveChannel.send({ embeds: [embed] }).catch(() => {});
+  }
+
+  sendLog(
+    member.guild,
+    "LEAVE_LOG_CHANNEL_ID",
+    "❌ مغادرة عضو",
+    `👤 العضو: **${member.user.tag}**\n🆔 ID: \`${member.id}\``,
+    0xffc857
+  );
 });
 
+// =======================
+// Ban Log
+// =======================
 client.on("guildBanAdd", async (ban) => {
-  let executor = "غير معروف";
-  let reason = ban.reason || "بدون سبب";
+  const entry = await getAuditLog(
+    ban.guild,
+    AuditLogEvent.MemberBanAdd,
+    ban.user.id
+  );
 
-  try {
-    const logs = await ban.guild.fetchAuditLogs({ type: AuditLogEvent.MemberBanAdd, limit: 1 });
-    const entry = logs.entries.first();
-    if (entry && entry.target?.id === ban.user.id) {
-      executor = entry.executor.tag;
-      reason = entry.reason || reason;
-    }
-  } catch {}
+  await sendLog(
+    ban.guild,
+    "BAN_LOG_CHANNEL_ID",
+    "🔨 بان | عضو اتبند",
+    `👤 العضو: **${ban.user.tag}**
+🆔 ID: \`${ban.user.id}\`
+👮 بواسطة: **${entry?.executor?.tag || "غير معروف"}**
+📌 السبب: ${entry?.reason || ban.reason || "بدون سبب"}`,
+    0xff3c68
+  );
 
-  logEmbed(ban.guild, "🔨 Ban", `👤 العضو: ${ban.user.tag}\n👮 بواسطة: ${executor}\n📌 السبب: ${reason}`, 0xff3c68);
+  console.log(`BAN LOG: ${ban.user.tag}`);
 });
 
+// =======================
+// Role Log
+// =======================
 client.on("guildMemberUpdate", async (oldMember, newMember) => {
   const oldRoles = oldMember.roles.cache;
   const newRoles = newMember.roles.cache;
 
-  const added = newRoles.filter(role => !oldRoles.has(role.id));
-  const removed = oldRoles.filter(role => !newRoles.has(role.id));
+  const addedRoles = newRoles.filter(role => !oldRoles.has(role.id));
+  const removedRoles = oldRoles.filter(role => !newRoles.has(role.id));
 
-  let executor = "غير معروف";
-  try {
-    const logs = await newMember.guild.fetchAuditLogs({ type: AuditLogEvent.MemberRoleUpdate, limit: 1 });
-    const entry = logs.entries.first();
-    if (entry && entry.target?.id === newMember.id) executor = entry.executor.tag;
-  } catch {}
+  if (!addedRoles.size && !removedRoles.size) return;
 
-  added.forEach(role => {
-    logEmbed(newMember.guild, "➕ رول اتضاف", `👤 العضو: ${newMember}\n🎭 الرول: ${role}\n👮 بواسطة: ${executor}`, 0x20e080);
-  });
+  const entry = await getAuditLog(
+    newMember.guild,
+    AuditLogEvent.MemberRoleUpdate,
+    newMember.id
+  );
 
-  removed.forEach(role => {
-    logEmbed(newMember.guild, "➖ رول اتشال", `👤 العضو: ${newMember}\n🎭 الرول: ${role}\n👮 بواسطة: ${executor}`, 0xffc857);
-  });
+  const executor = entry?.executor?.tag || "غير معروف";
+
+  for (const role of addedRoles.values()) {
+    await sendLog(
+      newMember.guild,
+      "ROLE_LOG_CHANNEL_ID",
+      "➕ رول اتضاف",
+      `👤 العضو: ${newMember}
+🎭 الرول: ${role}
+👮 بواسطة: **${executor}**`,
+      0x20e080
+    );
+  }
+
+  for (const role of removedRoles.values()) {
+    await sendLog(
+      newMember.guild,
+      "ROLE_LOG_CHANNEL_ID",
+      "➖ رول اتشال",
+      `👤 العضو: ${newMember}
+🎭 الرول: ${role}
+👮 بواسطة: **${executor}**`,
+      0xffc857
+    );
+  }
 });
 
-client.on("messageDelete", (message) => {
+// =======================
+// Message Logs
+// =======================
+client.on("messageDelete", async (message) => {
   if (!message.guild || message.author?.bot) return;
-  logEmbed(
+
+  const entry = await getAuditLog(
     message.guild,
+    AuditLogEvent.MessageDelete,
+    message.author.id
+  );
+
+  await sendLog(
+    message.guild,
+    "MESSAGE_LOG_CHANNEL_ID",
     "🗑️ رسالة اتحذفت",
-    `👤 الكاتب: ${message.author.tag}\n📍 الروم: ${message.channel}\n💬 الرسالة: ${message.content || "لا يوجد محتوى"}`,
+    `👤 صاحب الرسالة: **${message.author.tag}**
+🆔 ID: \`${message.author.id}\`
+👮 اللي مسح: **${entry?.executor?.tag || "غير معروف / يمكن صاحب الرسالة"}**
+📍 الروم: ${message.channel}
+💬 الرسالة:
+\`\`\`
+${cleanText(message.content)}
+\`\`\``,
     0xff3c68
   );
 });
 
-client.on("messageUpdate", (oldMessage, newMessage) => {
+client.on("messageUpdate", async (oldMessage, newMessage) => {
   if (!oldMessage.guild || oldMessage.author?.bot) return;
   if (oldMessage.content === newMessage.content) return;
 
-  logEmbed(
+  await sendLog(
     oldMessage.guild,
+    "MESSAGE_LOG_CHANNEL_ID",
     "✏️ رسالة اتعدلت",
-    `👤 الكاتب: ${oldMessage.author.tag}\n📍 الروم: ${oldMessage.channel}\n\n**قبل:** ${oldMessage.content || "فارغ"}\n**بعد:** ${newMessage.content || "فارغ"}`,
+    `👤 العضو: **${oldMessage.author.tag}**
+📍 الروم: ${oldMessage.channel}
+
+**قبل:**
+\`\`\`
+${cleanText(oldMessage.content)}
+\`\`\`
+
+**بعد:**
+\`\`\`
+${cleanText(newMessage.content)}
+\`\`\``,
     0x00e5ff
   );
 });
 
-client.on("voiceStateUpdate", (oldState, newState) => {
+// =======================
+// Voice Logs
+// دخول، خروج، نقل، طرد، ميوت، ديفن، فيديو، ستريم
+// =======================
+client.on("voiceStateUpdate", async (oldState, newState) => {
+  const guild = newState.guild || oldState.guild;
   const member = newState.member || oldState.member;
+  if (!guild || !member) return;
 
-  if (!oldState.channel && newState.channel) {
-    logEmbed(newState.guild, "🔊 دخول فويس", `👤 العضو: ${member}\n📍 الروم: ${newState.channel.name}`, 0x20e080);
+  const oldChannel = oldState.channel;
+  const newChannel = newState.channel;
+
+  if (!oldChannel && newChannel) {
+    await sendLog(
+      guild,
+      "VOICE_LOG_CHANNEL_ID",
+      "🔊 دخول فويس",
+      `👤 العضو: ${member}
+📍 الروم: **${newChannel.name}**`,
+      0x20e080
+    );
+    return;
   }
 
-  if (oldState.channel && !newState.channel) {
-    logEmbed(oldState.guild, "🔇 خروج من فويس", `👤 العضو: ${member}\n📍 الروم: ${oldState.channel.name}`, 0xffc857);
+  if (oldChannel && !newChannel) {
+    const disconnectEntry = await getAuditLog(
+      guild,
+      AuditLogEvent.MemberDisconnect,
+      member.id
+    );
+
+    if (disconnectEntry) {
+      await sendLog(
+        guild,
+        "VOICE_LOG_CHANNEL_ID",
+        "🚫 طرد من الفويس",
+        `👤 العضو: ${member}
+📍 من روم: **${oldChannel.name}**
+👮 بواسطة: **${disconnectEntry.executor?.tag || "غير معروف"}**`,
+        0xff3c68
+      );
+      return;
+    }
+
+    await sendLog(
+      guild,
+      "VOICE_LOG_CHANNEL_ID",
+      "🔇 خروج من الفويس",
+      `👤 العضو: ${member}
+📍 الروم: **${oldChannel.name}**`,
+      0xffc857
+    );
+    return;
   }
 
-  if (oldState.channel && newState.channel && oldState.channel.id !== newState.channel.id) {
-    logEmbed(newState.guild, "🔁 نقل فويس", `👤 العضو: ${member}\nمن: ${oldState.channel.name}\nإلى: ${newState.channel.name}`, 0x7c3cff);
+  if (oldChannel && newChannel && oldChannel.id !== newChannel.id) {
+    const moveEntry = await getAuditLog(
+      guild,
+      AuditLogEvent.MemberMove,
+      member.id
+    );
+
+    await sendLog(
+      guild,
+      "VOICE_LOG_CHANNEL_ID",
+      "🔁 نقل فويس",
+      `👤 العضو: ${member}
+📤 من: **${oldChannel.name}**
+📥 إلى: **${newChannel.name}**
+👮 بواسطة: **${moveEntry?.executor?.tag || "غير معروف / تحرك بنفسه"}**`,
+      0x7c3cff
+    );
+    return;
   }
+
+  if (oldState.serverMute !== newState.serverMute) {
+    const entry = await getAuditLog(guild, AuditLogEvent.MemberUpdate, member.id);
+
+    await sendLog(
+      guild,
+      "VOICE_LOG_CHANNEL_ID",
+      newState.serverMute ? "🎙️ ميوت فويس" : "🎙️ فك ميوت فويس",
+      `👤 العضو: ${member}
+👮 بواسطة: **${entry?.executor?.tag || "غير معروف"}**
+📍 الروم: **${newChannel?.name || oldChannel?.name || "غير معروف"}**`,
+      newState.serverMute ? 0xff3c68 : 0x20e080
+    );
+  }
+
+  if (oldState.serverDeaf !== newState.serverDeaf) {
+    const entry = await getAuditLog(guild, AuditLogEvent.MemberUpdate, member.id);
+
+    await sendLog(
+      guild,
+      "VOICE_LOG_CHANNEL_ID",
+      newState.serverDeaf ? "🔇 ديفن فويس" : "🔊 فك ديفن فويس",
+      `👤 العضو: ${member}
+👮 بواسطة: **${entry?.executor?.tag || "غير معروف"}**
+📍 الروم: **${newChannel?.name || oldChannel?.name || "غير معروف"}**`,
+      newState.serverDeaf ? 0xff3c68 : 0x20e080
+    );
+  }
+
+  if (oldState.selfVideo !== newState.selfVideo) {
+    await sendLog(
+      guild,
+      "VOICE_LOG_CHANNEL_ID",
+      newState.selfVideo ? "📹 فتح كاميرا" : "📹 قفل كاميرا",
+      `👤 العضو: ${member}
+📍 الروم: **${newChannel?.name || oldChannel?.name || "غير معروف"}**`,
+      0x00e5ff
+    );
+  }
+
+  if (oldState.streaming !== newState.streaming) {
+    await sendLog(
+      guild,
+      "VOICE_LOG_CHANNEL_ID",
+      newState.streaming ? "🟣 بدأ بث شاشة" : "⚫ أنهى بث الشاشة",
+      `👤 العضو: ${member}
+📍 الروم: **${newChannel?.name || oldChannel?.name || "غير معروف"}**`,
+      0x7c3cff
+    );
+  }
+});
+
+// =======================
+// Server / Channel Logs
+// =======================
+client.on("guildUpdate", async (oldGuild, newGuild) => {
+  const entry = await getAuditLog(newGuild, AuditLogEvent.GuildUpdate);
+
+  await sendLog(
+    newGuild,
+    "SERVER_LOG_CHANNEL_ID",
+    "⚙️ تعديل السيرفر",
+    `👮 بواسطة: **${entry?.executor?.tag || "غير معروف"}**
+
+**الاسم قبل:** ${oldGuild.name}
+**الاسم بعد:** ${newGuild.name}`,
+    0x00e5ff
+  );
 });
 
 client.on("channelCreate", async (channel) => {
-  let executor = "غير معروف";
-  try {
-    const logs = await channel.guild.fetchAuditLogs({ type: AuditLogEvent.ChannelCreate, limit: 1 });
-    const entry = logs.entries.first();
-    if (entry) executor = entry.executor.tag;
-  } catch {}
+  if (!channel.guild) return;
 
-  logEmbed(channel.guild, "📁 روم اتعمل", `📍 الروم: ${channel}\n👮 بواسطة: ${executor}`, 0x20e080);
+  const entry = await getAuditLog(
+    channel.guild,
+    AuditLogEvent.ChannelCreate,
+    channel.id
+  );
+
+  await sendLog(
+    channel.guild,
+    "SERVER_LOG_CHANNEL_ID",
+    "📁 روم اتعمل",
+    `📍 الروم: ${channel}
+👮 بواسطة: **${entry?.executor?.tag || "غير معروف"}**`,
+    0x20e080
+  );
 });
 
 client.on("channelDelete", async (channel) => {
-  let executor = "غير معروف";
-  try {
-    const logs = await channel.guild.fetchAuditLogs({ type: AuditLogEvent.ChannelDelete, limit: 1 });
-    const entry = logs.entries.first();
-    if (entry) executor = entry.executor.tag;
-  } catch {}
+  if (!channel.guild) return;
 
-  logEmbed(channel.guild, "🗑️ روم اتحذف", `📍 الاسم: ${channel.name}\n👮 بواسطة: ${executor}`, 0xff3c68);
+  const entry = await getAuditLog(
+    channel.guild,
+    AuditLogEvent.ChannelDelete,
+    channel.id
+  );
+
+  await sendLog(
+    channel.guild,
+    "SERVER_LOG_CHANNEL_ID",
+    "🗑️ روم اتحذف",
+    `📍 الاسم: **${channel.name}**
+👮 بواسطة: **${entry?.executor?.tag || "غير معروف"}**`,
+    0xff3c68
+  );
 });
 
+client.on("channelUpdate", async (oldChannel, newChannel) => {
+  if (!newChannel.guild) return;
+
+  const entry = await getAuditLog(
+    newChannel.guild,
+    AuditLogEvent.ChannelUpdate,
+    newChannel.id
+  );
+
+  await sendLog(
+    newChannel.guild,
+    "SERVER_LOG_CHANNEL_ID",
+    "✏️ تعديل روم",
+    `📍 الروم: ${newChannel}
+👮 بواسطة: **${entry?.executor?.tag || "غير معروف"}**
+
+**الاسم قبل:** ${oldChannel.name}
+**الاسم بعد:** ${newChannel.name}`,
+    0x00e5ff
+  );
+});
+
+// =======================
+// Basic Commands
+// =======================
 client.on("messageCreate", async (message) => {
   if (message.author.bot || !message.guild) return;
 
   if (message.content === "!ping") {
-    return message.reply("🏓 البوت شغال يا منوفي ✅");
+    return message.reply("🏓 البوت شغال ✅");
   }
 
   if (message.content === "!help") {
     const embed = new EmbedBuilder()
       .setColor(0x7c3cff)
-      .setTitle("🤖 أوامر VENOM RP BOT")
+      .setTitle("🤖 أوامر VENOM RB BOT")
       .setDescription(`
-**!ping** اختبار البوت  
-**!rules-server** قوانين السيرفر  
-**!rules-rp** قوانين الرول بلاي  
-**!announce نص** إعلان  
-**!clear رقم** مسح رسائل  
+**!ping** اختبار البوت
+**!help** عرض الأوامر
+**!clear رقم** مسح رسائل
 `)
       .setTimestamp();
 
     return message.reply({ embeds: [embed] });
   }
 
-  if (message.content === "!rules-server") {
-    if (!message.member.permissions.has(PermissionFlagsBits.Administrator)) return;
-
-    const embed = new EmbedBuilder()
-      .setColor(0xff3c68)
-      .setTitle("📜 قوانين السيرفر | VENOM RP")
-      .setDescription(`
-**1️⃣ الاحترام**
-يمنع السب والشتم والعنصرية والتنمر.
-
-**2️⃣ الإعلانات**
-يمنع نشر روابط أو إعلانات بدون إذن الإدارة.
-
-**3️⃣ التذاكر**
-يمنع فتح تذاكر عشوائية أو بلاغات كاذبة.
-
-**4️⃣ الغش والثغرات**
-يمنع استخدام هاكات أو استغلال ثغرات.
-
-**5️⃣ Vencord والقنوات المخفية**
-أي محاولة لرؤية القنوات المخفية أو الوصول لمحتوى غير مصرح به سيتم التعامل معها بشكل رسمي.
-
-**6️⃣ العقوبات**
-الإدارة لها حق اتخاذ القرار المناسب.
-
-⚜️ **VENOM RP**
-✍️ **المنوفي**
-`)
-      .setTimestamp();
-
-    return message.channel.send({ embeds: [embed] });
-  }
-
-  if (message.content === "!rules-rp") {
-    if (!message.member.permissions.has(PermissionFlagsBits.Administrator)) return;
-
-    const embed = new EmbedBuilder()
-      .setColor(0x00e5ff)
-      .setTitle("🎭 قوانين الرول بلاي | VENOM RP")
-      .setDescription(`
-**RDM** يمنع القتل العشوائي.  
-**VDM** يمنع الدهس العشوائي.  
-**Fail RP** يمنع التصرفات غير الواقعية.  
-**Meta Gaming** يمنع استخدام معلومات خارج اللعبة.  
-**Power Gaming** يمنع إجبار لاعب على شيء غير منطقي.  
-**Fear RP** لازم تخاف على حياتك.  
-**Combat Logging** يمنع الخروج أثناء السيناريو.  
-**NLR** بعد الموت تنسى السيناريو السابق.  
-**Cop Baiting** يمنع استفزاز الشرطة بدون سبب.
-
-⚜️ **VENOM RP**
-✍️ **المنوفي**
-`)
-      .setTimestamp();
-
-    return message.channel.send({ embeds: [embed] });
-  }
-
-  if (message.content.startsWith("!announce ")) {
-    if (!message.member.permissions.has(PermissionFlagsBits.Administrator)) return;
-
-    const text = message.content.replace("!announce ", "");
-    const embed = new EmbedBuilder()
-      .setColor(0x7c3cff)
-      .setTitle("📢 إعلان هام | VENOM RP")
-      .setDescription(text)
-      .setFooter({ text: "VENOM RP • المنوفي" })
-      .setTimestamp();
-
-    await message.delete().catch(() => {});
-    return message.channel.send({ embeds: [embed] });
-  }
-
   if (message.content.startsWith("!clear ")) {
-    if (!message.member.permissions.has(PermissionFlagsBits.ManageMessages)) return;
+    if (!message.member.permissions.has(PermissionFlagsBits.ManageMessages)) {
+      return message.reply("❌ ليس لديك صلاحية مسح الرسائل");
+    }
 
     const amount = Number(message.content.split(" ")[1]);
-    if (!amount || amount < 1 || amount > 100) return message.reply("❌ اكتب رقم من 1 لـ 100");
+
+    if (!amount || amount < 1 || amount > 100) {
+      return message.reply("❌ اكتب رقم من 1 إلى 100");
+    }
 
     await message.channel.bulkDelete(amount, true);
+
     const msg = await message.channel.send(`✅ تم مسح ${amount} رسالة`);
     setTimeout(() => msg.delete().catch(() => {}), 3000);
 
-    logEmbed(message.guild, "🧹 مسح رسائل", `👤 بواسطة: ${message.author.tag}\n📍 الروم: ${message.channel}\n🔢 العدد: ${amount}`, 0x00e5ff);
+    await sendLog(
+      message.guild,
+      "MESSAGE_LOG_CHANNEL_ID",
+      "🧹 مسح رسائل",
+      `👤 بواسطة: **${message.author.tag}**
+📍 الروم: ${message.channel}
+🔢 العدد: **${amount}**`,
+      0x00e5ff
+    );
   }
 });
 
